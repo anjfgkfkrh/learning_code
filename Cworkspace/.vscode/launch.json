@@ -1,0 +1,68 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Launch",
+      "program": "${workspaceFolder}/a.out",
+      "console": "integratedTerminal",
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    /*{
+      "name": "C/C++: clang 활성 파일 빌드 및 디버그",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/a.out",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb",
+      "preLaunchTask": "C/C++: clang 활성 파일 빌드"
+    },
+    {
+      "name": "C/C++: clang++ 활성 파일 빌드 및 디버그",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/a.out",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb",
+      "preLaunchTask": "C/C++: clang++ 활성 파일 빌드"
+    },*/
+    {
+      "name": "C/C++: gcc 활성 파일 빌드 및 디버그",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/a.out",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb",
+      "preLaunchTask": "C/C++: gcc 활성 파일 빌드",
+      "postDebugTask": "cleanup"
+    },
+    {
+      "name": "C/C++: g++ 활성 파일 빌드 및 디버그",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/a.out",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb",
+      "preLaunchTask": "C/C++: g++ 활성 파일 빌드",
+      "postDebugTask": "cleanup"
+    }
+  ]
+}

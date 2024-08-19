@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# 시스템
+.DS_Store
+Icon?
