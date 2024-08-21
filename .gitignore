@@ -31,6 +31,9 @@
 *.out
 *.app
 
+# vscode
+.vscode/
+
 # 시스템
 .DS_Store
 Icon?
