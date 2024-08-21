@@ -7,7 +7,7 @@ namespace MyExcel
 {
    class Vector
    {
-      std::string *data;
+      std::string* data;
       int capacity;
       int length;
 
@@ -34,13 +34,13 @@ namespace MyExcel
    {
       struct Node
       {
-         Node *prev;
+         Node* prev;
          std::string s;
 
-         Node(Node *prev, std::string s) : prev(prev), s(s) {};
+         Node(Node* prev, std::string s) : prev(prev), s(s) {};
       };
 
-      Node *current;
+      Node* current;
       Node start;
 
    public:
@@ -65,13 +65,13 @@ namespace MyExcel
    {
       struct Node
       {
-         Node *prev;
+         Node* prev;
          double s;
 
-         Node(Node *prev, double s) : prev(prev), s(s) {};
+         Node(Node* prev, double s) : prev(prev), s(s) {};
       };
 
-      Node *current;
+      Node* current;
       Node start;
 
    public:

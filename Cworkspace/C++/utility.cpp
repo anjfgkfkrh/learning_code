@@ -1,4 +1,3 @@
-
 #include "utils.h"
 
 namespace MyExcel
@@ -14,7 +13,7 @@ namespace MyExcel
       if (length >= capacity)
       {
          capacity *= 2;
-         std::string *temp = new std::string[capacity];
+         std::string* temp = new std::string[capacity];
          for (int i = 0; i < length; i++)
             temp[i] = data[i];
          delete[] data;
@@ -59,7 +58,7 @@ namespace MyExcel
 
    void Stack::push(std::string s)
    {
-      Node *n = new Node(current, s);
+      Node* n = new Node(current, s);
       current = n;
    }
 
@@ -69,7 +68,7 @@ namespace MyExcel
          return "";
 
       std::string s = current->s;
-      Node *n = current;
+      Node* n = current;
       current = current->prev;
 
       delete n;
@@ -90,7 +89,7 @@ namespace MyExcel
    {
       while (current != &start)
       {
-         Node *n = current;
+         Node* n = current;
          current = current->prev;
          delete n;
       }
@@ -108,7 +107,7 @@ namespace MyExcel
 
    void NumStack::push(double s)
    {
-      Node *n = new Node(current, s);
+      Node* n = new Node(current, s);
       current = n;
    }
 
@@ -118,7 +117,7 @@ namespace MyExcel
          return 0;
 
       double s = current->s;
-      Node *n = current;
+      Node* n = current;
       current = current->prev;
 
       delete n;
@@ -130,7 +129,7 @@ namespace MyExcel
       return current->s;
    }
 
-   bool Stack::is_empty()
+   bool NumStack::is_empty()
    {
       return current == &start;
    }
@@ -139,7 +138,7 @@ namespace MyExcel
    {
       while (current != &start)
       {
-         Node *n = current;
+         Node* n = current;
          current = current->prev;
          delete n;
       }

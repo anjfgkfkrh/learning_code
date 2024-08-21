@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <ctime>
 
 using std::string;
 
@@ -12,25 +13,64 @@ namespace MyExcel {
     int x, y;
     Table* table;
 
+    //string data;
+
+  public:
+    virtual string stringify() = 0;
+    virtual int to_numeric() = 0;
+
+    Cell(int x, int y, Table* table);
+    virtual ~Cell() {};
+  };
+
+  class StringCell : public Cell {
     string data;
 
   public:
-    virtual string stringify();
-    virtual int to_numeric();
+    string stringify();
+    int to_numeric();
 
-    Cell(string data, int x, int y, Table* table);
+    StringCell(string data, int x, int y, Table* t);
   };
 
-  Cell::Cell(string data, int x, int y, Table* table) : data(data), x(x), y(y), table(table) {}
+  class NumberCell : public Cell {
+    int data;
 
-  string Cell::stringify() { return data; }
-  int Cell::to_numeric() { return 0; }
+  public:
+    string stringify();
+    int to_numeric();
 
-  ////////////////////////////////////////////
-  // Cell
-  ////////////////////////////////////////////
-  // Table
-  ////////////////////////////////////////////
+    NumberCell(int data, int x, int y, Table* t);
+  };
+
+  class DateCell : public Cell {
+    time_t data;
+
+  public:
+    string stringify();
+    int to_numeric();
+
+    DateCell(string s, int x, int y, Table* t);
+  };
+
+  class ExprCell : public Cell {
+    string data;
+    string* parsed_expr;
+
+    Vector exp_vec;
+
+    // 연산자 우선 순위를 반환한다.
+    int precedence(char c);
+
+    // 수식을 분석한다.
+    void parse_expresstion();
+
+  public:
+    ExprCell(string data, int x, int y, Table* t);
+
+    string stringify();
+    int to_numeric();
+  };
 
   class Table {
   protected:
@@ -59,6 +99,168 @@ namespace MyExcel {
 
     virtual string print_table() = 0;
   };
+
+  class TxTTable : public Table {
+    string repeat_char(int n, char c);
+
+    // 숫자로 된 열 번호를 A, B, .... Z, AA, AB, ...  이런 순으로 매겨줌
+    string col_num_to_str(int n);
+
+  public:
+    TxTTable(int row, int col);
+
+    // 텍스트로 표를 깨끗하게 출력
+    string print_table();
+  };
+
+  class HtmlTable : public Table {
+  public:
+    HtmlTable(int row, int col);
+    string print_table();
+  };
+  class CSVTable : public Table {
+  public:
+    CSVTable(int row, int col);
+    string print_table();
+  };
+
+  ////////////////////////////////////////////
+  // 선언
+  ////////////////////////////////////////////
+  // 구현
+  ////////////////////////////////////////////
+
+  Cell::Cell(int x, int y, Table* table) : x(x), y(y), table(table) {}
+
+  StringCell::StringCell(string data, int x, int y, Table* t) : Cell(x, y, t), data(data) {}
+
+  string StringCell::stringify() { return data; }
+  int StringCell::to_numeric() { return 0; }
+
+  NumberCell::NumberCell(int data, int x, int y, Table* t) : Cell(x, y, t), data(data) {}
+
+  string NumberCell::stringify() { return std::to_string(data); }
+  int NumberCell::to_numeric() { return data; }
+
+  DateCell::DateCell(string s, int x, int y, Table* t) :Cell(x, y, t) {
+    int year = atoi(s.c_str());
+    int month = atoi(s.c_str() + 5);
+    int day = atoi(s.c_str() + 8);
+
+    tm timeinfo;
+    timeinfo.tm_year = year - 1900;
+    timeinfo.tm_mon = month - 1;
+    timeinfo.tm_mday = day;
+    timeinfo.tm_hour = 0;
+    timeinfo.tm_min = 0;
+    timeinfo.tm_sec = 0;
+
+    data = mktime(&timeinfo);
+  }
+
+  string DateCell::stringify() {
+    char buf[50];
+    tm temp;
+    localtime_r(&data, &temp);
+
+    strftime(buf, 50, "%F", &temp);
+
+    return string(buf);
+  }
+
+  int DateCell::to_numeric() { return static_cast<int>(data); }
+
+  ExprCell::ExprCell(string data, int x, int y, Table* t) : Cell(x, y, t), data(data) {}
+
+  string ExprCell::stringify() { return data; }
+
+  int ExprCell::to_numeric() {
+    double result = 0;
+    NumStack stack;
+
+    for (int i = 0; i < exp_vec.size(); i++) {
+      string s = exp_vec[i];
+
+      //셀 일 경우
+      if (isalpha(s[0])) {
+        stack.push(table->to_numeric(s));
+      }
+      // 숫자 일 경우 (한 자리라 가정)
+      else if (isdigit(s[0])) {
+        stack.push(atoi(s.c_str()));
+      }
+      else {
+        double y = stack.pop();
+        double x = stack.pop();
+        switch (s[0]) {
+        case '+':
+          stack.push(x + y);
+          break;
+        case '-':
+          stack.push(x - y);
+          break;
+        case '*':
+          stack.push(x * y);
+          break;
+        case '/':
+          stack.push(x / y);
+          break;
+        }
+      }
+    }
+    return stack.pop();
+  }
+
+  int ExprCell::precedence(char c) {
+    switch (c) {
+    case '(':
+    case '[':
+    case '{':
+      return 0;
+    case '+':
+    case '-':
+      return 1;
+    case '*':
+    case '/':
+      return 2;
+    }
+
+    return 0;
+  }
+
+  void ExprCell::parse_expresstion() {
+    Stack stack;
+
+    //수식 전체를 () 로 둘러 싸서 exp_vec에 남아있는 연산자들이 push 되게 해줌
+    data.insert(0, "(");
+    data.push_back(')');
+
+    for (int i = 0; i < data.length(); i++) {
+      if (isalpha(data[i])) {
+        exp_vec.push_back(data.substr(i, 2));
+        i++;
+      }
+      else if (isdigit(data[i])) {
+        exp_vec.push_back(data.substr(i, 1));
+      }
+      else if (data[i] == '(' || data[i] == '[' || data[i] == '{') {
+        stack.push(data.substr(i, 1));
+      }
+      else if (data[i] == ')' || data[i] == ']' || data[i] == '}') {
+        string t = stack.pop();
+        while (t != "(" && t != "[" && t != "{") {
+          exp_vec.push_back(t);
+          t = stack.pop();
+        }
+      }
+      else if (data[i] == '+' || data[i] == '-' || data[i] == '*' || data[i] == '/') {
+        while (!stack.is_empty() && precedence(stack.peek()[0]) >= precedence(data[i])) {
+          exp_vec.push_back(stack.pop());
+        }
+        stack.push(data.substr(i, 1));
+      }
+    }
+  }
 
   Table::Table(int max_row_size, int max_col_size) : max_row_size(max_row_size), max_col_size(max_col_size) {
     data_table = new Cell * *[max_row_size];
@@ -132,25 +334,6 @@ namespace MyExcel {
     return os;
   }
 
-  ////////////////////////////////////////////
-  // Table
-  ////////////////////////////////////////////
-  // TxTTable
-  ////////////////////////////////////////////
-
-  class TxTTable : public Table {
-    string repeat_char(int n, char c);
-
-    // 숫자로 된 열 번호를 A, B, .... Z, AA, AB, ...  이런 순으로 매겨줌
-    string col_num_to_str(int n);
-
-  public:
-    TxTTable(int row, int col);
-
-    // 텍스트로 표를 깨끗하게 출력
-    string print_table();
-  };
-
   TxTTable::TxTTable(int row, int col) : Table(row, col) {}
 
   // 텍스트를 표로 깨끗하게 출력
@@ -220,18 +403,6 @@ namespace MyExcel {
     return s;
   }
 
-  ////////////////////////////////////////////
-  // TxTTable
-  ////////////////////////////////////////////
-  // HtmlTable
-  ////////////////////////////////////////////
-
-  class HtmlTable : public Table {
-  public:
-    HtmlTable(int row, int col);
-    string print_table();
-  };
-
   HtmlTable::HtmlTable(int row, int col) : Table(row, col) {};
 
   string HtmlTable::print_table() {
@@ -249,18 +420,6 @@ namespace MyExcel {
     s += "</table>";
     return s;
   }
-
-  ////////////////////////////////////////////
-  // HtmlTable
-  ////////////////////////////////////////////
-  // CSVTable
-  ////////////////////////////////////////////
-
-  class CSVTable : public Table {
-  public:
-    CSVTable(int row, int col);
-    string print_table();
-  };
 
   CSVTable::CSVTable(int row, int col) : Table(row, col) {};
 
@@ -291,18 +450,114 @@ namespace MyExcel {
     return s;
   }
 
+  // 인터페이스 클래스
+  class Excel {
+    Table* current_table;
+
+  public:
+    Excel(int max_row, int max_col, int choice = 0);
+
+    int parse_user_input(string s);
+    void command_line();
+  };
+
+  Excel::Excel(int max_row, int max_col, int choice) {
+    switch (choice) {
+    case 0:
+      current_table = new TxTTable(max_row, max_col);
+      break;
+    case 1:
+      current_table = new CSVTable(max_row, max_col);
+      break;
+    default:
+      current_table = new HtmlTable(max_row, max_col);
+    }
+  }
+
+  int Excel::parse_user_input(string s) {
+    int next = 0;
+    string command = "";
+    for (int i = 0; i < s.length(); i++) {
+      if (s[i] == ' ') {
+        command = s.substr(0, i);
+        next = i + 1;
+        break;
+      }
+      else if (i == s.length() - 1) {
+        command = s.substr(0, i + 1);
+        next = i + 1;
+        break;
+      }
+    }
+
+    string to = "";
+    for (int i = next; i < s.length(); i++) {
+      if (s[i] == ' ' || i == s.length() - 1) {
+        to = s.substr(next, i - next);
+        next = i + 1;
+        break;
+      }
+      else if (i == s.length() - 1) {
+        to = s.substr(0, i + 1);
+        next = i + 1;
+        break;
+      }
+    }
+
+    // Cell 이름으로 받는다.
+    int col = to[0] - 'A';
+    int row = atoi(to.c_str() + 1) - 1;
+
+    string rest = s.substr(next);
+
+    if (command == "sets") {
+      current_table->reg_cell(new StringCell(rest, row, col, current_table), row, col);
+    }
+    else if (command == "setn") {
+      current_table->reg_cell(new NumberCell(atoi(rest.c_str()), row, col, current_table), row, col);
+    }
+    else if (command == "setd") {
+      current_table->reg_cell(new DateCell(rest, row, col, current_table), row, col);
+    }
+    else if (command == "sete") {
+      current_table->reg_cell(new ExprCell(rest, row, col, current_table), row, col);
+    }
+    else if (command == "out") {
+      std::ofstream out(to);
+      out << *current_table;
+      std::cout << to << " 에 내용이 저장되었습니다" << std::endl;
+    }
+    else if (command == "exit") {
+      return 0;
+    }
+
+    return 1;
+  }
+
+  void Excel::command_line() {
+    string s;
+    std::getline(std::cin, s);
+
+    while (parse_user_input(s)) {
+      std::cout << *current_table << std::endl << ">> ";
+      std::getline(std::cin, s);
+    }
+  }
+
 };
+
 
 // 생략
 int main() {
-  MyExcel::CSVTable table(5, 5);
-  std::ofstream out("test.csv");
+  std::cout
+    << "테이블 (타입) (최대 행 크기) (최대 열 크기) 를 순서대로 입력해주세요"
+    << std::endl;
+  std::cout << "* 참고 * " << std::endl;
+  std::cout << "1 : 텍스트 테이블, 2 : CSV 테이블, 3 : HTML 테이블"
+    << std::endl;
 
-  table.reg_cell(new MyExcel::Cell("Hello~", 0, 0, &table), 0, 0);
-  table.reg_cell(new MyExcel::Cell("C++", 0, 1, &table), 0, 1);
-
-  table.reg_cell(new MyExcel::Cell("Programming", 1, 1, &table), 1, 1);
-  std::cout << std::endl
-    << table;
-  out << table;
+  int type, max_row, max_col;
+  std::cin >> type >> max_row >> max_col;
+  MyExcel::Excel m(max_row, max_col, type - 1);
+  m.command_line();
 }
