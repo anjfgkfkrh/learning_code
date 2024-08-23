@@ -1,0 +1,161 @@
+#include <iostream>
+#include <string>
+
+
+
+// 아래 두 함수는 세트
+// 재귀 함수 형식으로 반복 호출
+// 순서 또한 바뀌면 안됌
+template <typename T>
+void print(T arg) {
+   std::cout << arg << std::endl;
+}
+
+template <typename T, typename... Types>
+void print(T arg, Types... args) {
+   std::cout << arg << ", ";
+   print(args...);
+}
+
+//////////////////////////////////////////////
+
+// 메모리 할당/해제는 매우 느린 작업 중 하나
+// 수치적 예시 (상대적인 기준)
+// I/O 작업: 100ms (파일 읽기/쓰기)
+// 동적 메모리 할당: 10ms (대규모 객체 할당)
+// 스레드 동기화: 1ms (뮤텍스 잠금)
+// 복잡한 알고리즘: O(n^2)의 성능, 예를 들어 n=1000일 때 수 초 소요
+// 가상 함수 호출: 0.1ms (동적 바인딩에 의한 오버헤드)
+// 복사 및 이동 작업: 0.01ms (간단한 객체 복사)
+
+/*
+template <typename String>
+std::string StrCat(const String& s) {
+   return std::string(s);
+}
+
+template <typename String, typename... Strings>
+std::string StrCat(const String& s, Strings... strs) {
+   return std::string(s) + StrCat(strs...);
+}
+*/
+
+// 위 함수는 + 를 여러번 하여 메모리 할당을 자주 함
+// 성능 저하의 요인
+/////////////////////////////////////////////////
+
+size_t GetStringSize(const char* s) { return strlen(s); }
+
+size_t GetStringSize(const std::string& s) { return s.size(); }
+
+template <typename String, typename... Strings>
+size_t GetStringSize(const String& s, Strings... strs) {
+   return GetStringSize(s) + GetStringSize(strs...);
+}
+
+void AppendToString(std::string* concat_str) { return; }
+
+template <typename String, typename... Strings>
+void AppendToString(std::string* concat_str, const String& s, Strings... strs) {
+   concat_str->append(s);
+   AppendToString(concat_str, strs...);
+}
+
+template <typename String, typename... Strings>
+std::string StrCat(const String& s, Strings... strs) {
+   //합쳐질 문자열의 총 길이를 구함
+   size_t total_size = GetStringSize(s, strs...);
+
+   //reserve를 통해 미리 공간을 할당해 놓음
+   std::string concat_str;
+   concat_str.reserve(total_size);
+
+   concat_str = s;
+
+   // concat_str 에 문자열들을 붙인다.
+   AppendToString(&concat_str, strs...);
+
+   return concat_str;
+}
+
+// int main() {
+//    // std::string 과 const char* 을 혼합해서 사용 가능하다.
+//    std::cout << StrCat(std::string("this"), " ", "is", " ", std::string("a"),
+//       " ", std::string("sentence"));
+// }
+
+//////////////////////////////////////////////////////////////////////////////////
+
+// 재귀 호출 종료를 위한 베이스 케이스
+int sum_all() { return 0; }
+
+template <typename...Ints>
+int sum_all(int num, Ints... nums) {
+   return num + sum_all(nums...);
+}
+
+template<typename... Ints>
+double average(Ints... nums) {
+   return static_cast<double>(sum_all(nums...)) / sizeof...(nums);
+}
+
+// int main() {
+//    // (1 + 4 + 2 + 3 + 10) / 5
+//    std::cout << average(1, 4, 2, 3, 10) << std::endl;
+// }
+
+//////////////////////////////////////////////////////////////////////////////////
+
+// Fold Expression
+
+// 재귀 호출 종료를 위한 베이스 케이스
+// int sum_all() { return 0; }
+// 위의 베이스 케이스 없이 가변 템플릿 재귀 함수를 구현
+
+template <typename... Ints>
+int sum_all(Ints... nums) {
+   return (... + nums);
+}
+
+// int main() {
+//    // 1 + 4 + 2 + 3 + 10
+//    std::cout << sum_all(1, 4, 2, 3, 10) << std::endl;
+// }
+
+
+
+template <typename Int, typename... Ints>
+Int diff_from(Int start, Ints... nums) {
+   return (start - ... - nums);
+}
+
+// int main() {
+//    // 100 - 1 - 4 - 2 - 3 - 10
+//    std::cout << diff_from(100, 1, 4, 2, 3, 10) << std::endl;
+// }
+
+class A {
+public:
+   void do_something(int x) const {
+      std::cout << "Do somethig with " << x << std::endl;
+   }
+};
+
+template <typename T, typename... Ints>
+void do_many_things(const T& t, Ints... nums) {
+   (t.do_something(nums), ...);
+}
+template <typename T, typename... Ints>
+void do_many_things_rev(const T& t, Ints... nums) {
+   (..., t.do_something(nums));
+}
+
+int main() {
+   A a;
+   do_many_things(a, 1, 3, 2, 4);
+   // (do(1) (do(3) (do(2) (do(4)))))
+   do_many_things_rev(a, 1, 3, 2, 4);
+   //((((do(1)) do(3)) do(2)) do(4))
+   // 왜 차이가 없지???????
+   // 왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?왜?
+}

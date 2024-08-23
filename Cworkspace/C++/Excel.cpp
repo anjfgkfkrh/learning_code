@@ -57,7 +57,7 @@ namespace MyExcel {
     string data;
     string* parsed_expr;
 
-    Vector exp_vec;
+    Vector<string> exp_vec;
 
     // 연산자 우선 순위를 반환한다.
     int precedence(char c);
