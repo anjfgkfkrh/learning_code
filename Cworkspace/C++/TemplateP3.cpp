@@ -57,3 +57,21 @@ template <class R1, class R2>
 struct _Ratio_add {
    typedef Ratio<R1::num* R2::den + R2::num * R1::den, R1::den* R2::den> type;
 };
+
+template <class R1, class R2>
+struct Ratio_add : _Ratio_add<R1, R2>::type {};
+
+
+// using = typedef
+int main() {
+   // typedef Ratio<2, 3> rat;
+   using rat = Ratio<2, 3>; // 위와 같음
+   typedef Ratio<3, 2> rat2;
+   // using rat2 Ratio<3, 2>; // 위와 같음
+   typedef Ratio_add<rat, rat2> rat3;
+   // using rat3 = Ratio_add<rat, rat2>; // 위와 같음
+
+   std::cout << rat3::num << " / " << rat3::den << std::endl;
+
+   return 0;
+}
