@@ -55,6 +55,9 @@
       "iomanip": "cpp",
       "list": "cpp",
       "__tree": "cpp",
-      "set": "cpp"
+      "set": "cpp",
+      "map": "cpp",
+      "unordered_set": "cpp"
    },
+   "C_Cpp.default.cppStandard": "c++17"
 }

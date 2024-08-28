@@ -128,33 +128,34 @@ void print_set(const std::multiset<K>& s) {
 // unordered set
 // 정렬되지 않은 셋 (해쉬 셋)x
 template <typename K>
-void print_unordered_set(const std::unordered_set<K>& m){
-   for(const auto& elem :m)
-      std::cout <<elem <<std::endl;
+void print_unordered_set(const std::unordered_set<K>& m) {
+   for (const auto& elem : m)
+      std::cout << elem << std::endl;
 }
 
-template <typename K>void is_exist(std::unordered_set<K>& s, K key){
+template <typename K>
+void is_exist(std::unordered_set<K>& s, K key) {
    auto itr = s.find(key);
-   if(itr != s.end())
-      std::cout<< key<<" 가 존재!"<< std::endl;
-   else 
-      std::cout << key <<" 가 없다" <<std::endl;
+   if (itr != s.end())
+      std::cout << key << " 가 존재!" << std::endl;
+   else
+      std::cout << key << " 가 없다" << std::endl;
 }
 
 // Todo 해시 힘수를 위한 함수객체(functor)를 만들어줌
 // std namespace 안에 정의
 namespace std {
-template<>
-struct hash<Todo>{
-   size_t operator()(const Todo& t) const {
-      hash<string> hash_func;
+   template<>
+   struct hash<Todo> {
+      size_t operator()(const Todo& t) const {
+         hash<string> hash_func;
 
-      return t.priority ^ (hash_func(t.job_desc));
-   }
-};
+         return t.priority ^ (hash_func(t.job_desc));
+      }
+   };
 }
 
-int main(){
+int main() {
    // std::unordered_set<std::string> s;
 
    // s.insert("hi");
@@ -178,11 +179,11 @@ int main(){
 
    std::unordered_set<Todo> todos;
 
-   todos.insert(Todo(1,"농구하기"));
-   todos.insert(Todo(2,"수학 숙제 하기"));
-   todos.insert(Todo(1,"프로그래밍 프로젝트"));
-   todos.insert(Todo(3,"친구 만나기"));
-   todos.insert(Todo(2,"영화보기"));
+   todos.insert(Todo(1, "농구하기"));
+   todos.insert(Todo(2, "수학 숙제 하기"));
+   todos.insert(Todo(1, "프로그래밍 프로젝트"));
+   todos.insert(Todo(3, "친구 만나기"));
+   todos.insert(Todo(2, "영화보기"));
    print_unordered_set(todos);
    std::cout << "------------------------" << std::endl;
 }
