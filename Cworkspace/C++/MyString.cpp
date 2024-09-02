@@ -3,7 +3,7 @@
 
 class MyString
 {
-   char *_string;
+   char* _string;
    int string_length;
    unsigned int memory_capacity;
 
@@ -12,8 +12,9 @@ class MyString
 
 public:
    MyString(char c);
-   MyString(const char *string);
-   MyString(const MyString &str);
+   MyString(const char* string);
+   MyString(const MyString& str);
+   MyString(MyString&& str);
    explicit MyString(int capacity); // 암시적 변환 불가
    // 암시적 변환 ex)
    // MyString s  = "abc"   =>   MyString s = MyString("abc")
@@ -22,33 +23,35 @@ public:
 
    ~MyString()
    {
-      delete[] _string;
+      if (_string)
+         delete[] _string;
    }
 
-   bool operator==(MyString &str);
-   char &operator[](const int index);
+   bool operator==(MyString& str);
+   char& operator[](const int index);
+   MyString& operator=(MyString&& str);
 
-   MyString &assign(const MyString &str);
-   MyString &assign(const char *str);
+   MyString& assign(const MyString& str);
+   MyString& assign(const char* str);
 
-   MyString &insert(int loc, const MyString &str);
-   MyString &insert(int loc, const char *str);
-   MyString &insert(int loc, char c);
+   MyString& insert(int loc, const MyString& str);
+   MyString& insert(int loc, const char* str);
+   MyString& insert(int loc, char c);
 
-   MyString &erase(int loc, int num);
-   MyString &erase(int loc);
+   MyString& erase(int loc, int num);
+   MyString& erase(int loc);
 
-   int find(int find_from, MyString &str) const;
-   int find(int find_from, const char *str) const;
+   int find(int find_from, MyString& str) const;
+   int find(int find_from, const char* str) const;
    int find(int find_from, char c) const;
-   int findKMP(int find_from, MyString &str) const;
-   int findKMP(int find_from, const char *str) const;
+   int findKMP(int find_from, MyString& str) const;
+   int findKMP(int find_from, const char* str) const;
    int findKMP(int find_from, char c) const;
-   int findBM(int find_from, MyString &str) const;
-   int findBM(int find_from, const char *str) const;
+   int findBM(int find_from, MyString& str) const;
+   int findBM(int find_from, const char* str) const;
    int findBM(int find_from, char c) const;
 
-   int compare(const MyString &str) const;
+   int compare(const MyString& str) const;
 
    void reserve(int size);
 
@@ -68,7 +71,7 @@ MyString::MyString(char c)
 
    _string[0] = c;
 }
-MyString::MyString(const char *string)
+MyString::MyString(const char* string)
 {
    memory_capacity = strlen(string);
    string_length = memory_capacity;
@@ -77,7 +80,7 @@ MyString::MyString(const char *string)
    for (int i = 0; i < string_length; i++)
       _string[i] = string[i];
 }
-MyString::MyString(const MyString &str)
+MyString::MyString(const MyString& str)
 {
    memory_capacity = str.length();
    string_length = memory_capacity;
@@ -86,6 +89,12 @@ MyString::MyString(const MyString &str)
    for (int i = 0; i < string_length; i++)
       _string[i] = str._string[i];
 }
+MyString::MyString(MyString&& str) {
+   memory_capacity = str.memory_capacity;
+   string_length = str.string_length;
+   _string = str._string;
+   str._string = nullptr;
+}
 MyString::MyString(int capacity)
 {
    _string = new char[capacity];
@@ -93,15 +102,23 @@ MyString::MyString(int capacity)
    memory_capacity = capacity;
    std::cout << "Capacity : " << capacity << std::endl;
 }
-bool MyString::operator==(MyString &str)
+bool MyString::operator==(MyString& str)
 {
    return !compare(str);
 }
-char &MyString::operator[](const int index)
+char& MyString::operator[](const int index)
 {
    return _string[index];
 }
-MyString &MyString::assign(const MyString &str)
+MyString& MyString::operator=(MyString&& str) {
+   memory_capacity = str.memory_capacity;
+   string_length = str.string_length;
+   _string = str._string;
+   str._string = nullptr;
+
+   return *this;
+}
+MyString& MyString::assign(const MyString& str)
 {
    if (str.length() > memory_capacity)
    {
@@ -116,7 +133,7 @@ MyString &MyString::assign(const MyString &str)
 
    return *this;
 }
-MyString &MyString::assign(const char *str)
+MyString& MyString::assign(const char* str)
 {
    if (strlen(str) > memory_capacity)
    {
@@ -131,14 +148,14 @@ MyString &MyString::assign(const char *str)
 
    return *this;
 }
-MyString &MyString::insert(int loc, const MyString &str)
+MyString& MyString::insert(int loc, const MyString& str)
 {
    if (loc >= string_length || loc < 0)
       return *this;
 
    if (memory_capacity < string_length + str.length())
    {
-      char *prev_string_content = _string;
+      char* prev_string_content = _string;
 
       if (memory_capacity * 2 > string_length + str.length())
          memory_capacity *= 2;
@@ -178,17 +195,17 @@ MyString &MyString::insert(int loc, const MyString &str)
       return *this;
    }
 }
-MyString &MyString::insert(int loc, const char *str)
+MyString& MyString::insert(int loc, const char* str)
 {
    MyString temp(str);
    return insert(loc, temp);
 }
-MyString &MyString::insert(int loc, char c)
+MyString& MyString::insert(int loc, char c)
 {
    MyString temp(c);
    return insert(loc, temp);
 }
-MyString &MyString::erase(int loc, int num)
+MyString& MyString::erase(int loc, int num)
 {
    if (loc >= string_length || loc < 0 || num < 0 || loc + num >= string_length)
       return *this;
@@ -200,11 +217,11 @@ MyString &MyString::erase(int loc, int num)
 
    return *this;
 }
-MyString &MyString::erase(int loc)
+MyString& MyString::erase(int loc)
 {
    return erase(loc, 1);
 }
-int MyString::find(int find_from, MyString &str) const
+int MyString::find(int find_from, MyString& str) const
 {
    // brute-force Algorithm
    if (find_from < 0 || find_from >= string_length || str.length() == 0)
@@ -223,7 +240,7 @@ int MyString::find(int find_from, MyString &str) const
 
    return -1;
 }
-int MyString::find(int find_from, const char *str) const
+int MyString::find(int find_from, const char* str) const
 {
    MyString temp(str);
    return find(find_from, temp);
@@ -233,7 +250,7 @@ int MyString::find(int find_from, char c) const
    MyString temp(c);
    return find(find_from, temp);
 }
-int MyString::findKMP(int find_from, MyString &str) const
+int MyString::findKMP(int find_from, MyString& str) const
 {
    // KMP Algorithm
    if (find_from < 0 || find_from >= string_length || str.length() == 0)
@@ -334,7 +351,7 @@ int MyString::findKMP(int find_from, MyString &str) const
    }
    return -1; // 못 찾을시 리턴값
 }
-int MyString::findKMP(int find_from, const char *str) const
+int MyString::findKMP(int find_from, const char* str) const
 {
    MyString temp(str);
    return MyString::findKMP(find_from, temp);
@@ -344,12 +361,12 @@ int MyString::findKMP(int find_from, char c) const
    MyString temp(c);
    return MyString::findKMP(find_from, temp);
 }
-int MyString::findBM(int find_from, MyString &str) const
+int MyString::findBM(int find_from, MyString& str) const
 {
    // 나중에 구현
    // 귀찮아짐
 }
-int MyString::compare(const MyString &str) const
+int MyString::compare(const MyString& str) const
 {
    if (str.length() <= 0)
       return -2;
@@ -368,7 +385,7 @@ void MyString::reserve(int size)
    if (size <= memory_capacity)
       return;
 
-   char *prev_string_content = _string;
+   char* prev_string_content = _string;
 
    memory_capacity = size;
    _string = new char[memory_capacity];
@@ -401,11 +418,26 @@ void MyString::println() const
 {
    std::cout << _string << std::endl;
 }
+template <typename T>
+void my_swap(T& a, T& b) {
+   T tmp(std::move(a));
+   a = std::move(b);
+   b = std::move(tmp);
+}
 
-int main()
-{
-   MyString str("abcdef");
-   str[3] = 'c';
+int main() {
+   MyString str1("abc");
+   MyString str2("def");
+   std::cout << "Swap 전 -----" << std::endl;
+   std::cout << "str1 : ";
+   str1.println();
+   std::cout << "str2 : ";
+   str2.println();
 
-   str.println();
+   std::cout << "Swap 후 -----" << std::endl;
+   my_swap(str1, str2);
+   std::cout << "str1 : ";
+   str1.println();
+   std::cout << "str2 : ";
+   str2.println();
 }
