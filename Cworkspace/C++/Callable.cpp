@@ -97,6 +97,7 @@ int main() {
 
    // v1이 그대로 전달된 것이 아니라 v1의 복사본이 전달됨!
    // auto do_something_with_v1 = std::bind(do_something, v1, std::placeholders::_1);
+   // v1을 레퍼런스로 전달
    auto do_something_with_v1 = std::bind(do_something, std::ref(v1), std::placeholders::_1);
    do_something_with_v1(v2);
 
